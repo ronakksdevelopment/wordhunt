@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WordHunt - বাংলা ধাঁধার খেলা</title>
+    <title>WordHunt - Riddle Game</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -28,7 +28,7 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['"Hind Siliguri"', 'sans-serif'],
+                        sans: ['"Poppins"', 'sans-serif'],
                     }
                 }
             }
@@ -37,7 +37,7 @@
     
     <style>
         body {
-            font-family: 'Hind Siliguri', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #fdf2f8; /* pink-50 */
             touch-action: manipulation;
             overflow: hidden; /* Prevent scrolling on mobile */
@@ -146,15 +146,15 @@
                     <i class="fa-solid fa-star text-yellow-300"></i>
                 </div>
                 <div>
-                    <p class="text-xs text-pink-100 font-medium">স্কোর</p>
-                    <p id="score-display" class="font-bold text-xl leading-none">০</p>
+                    <p class="text-xs text-pink-100 font-medium">SCORE</p>
+                    <p id="score-display" class="font-bold text-xl leading-none">0</p>
                 </div>
             </div>
             <h1 class="text-2xl font-bold tracking-wider">WordHunt</h1>
             <div class="flex items-center gap-2 text-right">
                 <div>
-                    <p class="text-xs text-pink-100 font-medium">লেভেল</p>
-                    <p id="level-display" class="font-bold text-xl leading-none">১<span class="text-sm font-normal text-pink-200">/১০০</span></p>
+                    <p class="text-xs text-pink-100 font-medium">LEVEL</p>
+                    <p id="level-display" class="font-bold text-xl leading-none">1<span class="text-sm font-normal text-pink-200">/100</span></p>
                 </div>
                 <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
                     <i class="fa-solid fa-layer-group text-white"></i>
@@ -168,8 +168,8 @@
             <!-- Timer Section -->
             <div class="mb-6">
                 <div class="flex justify-between items-end mb-2">
-                    <span class="text-gray-500 text-sm font-medium"><i class="fa-regular fa-clock mr-1"></i> সময় বাকি</span>
-                    <span id="timer-text" class="text-pink-600 font-bold text-xl">৩০ সেঃ</span>
+                    <span class="text-gray-500 text-sm font-medium"><i class="fa-regular fa-clock mr-1"></i> Time Left</span>
+                    <span id="timer-text" class="text-pink-600 font-bold text-xl">30s</span>
                 </div>
                 <div class="timer-bar-container">
                     <div id="timer-bar" class="timer-bar"></div>
@@ -193,11 +193,11 @@
                 </div>
                 <div class="relative">
                     <input type="text" id="answer-input" 
-                        class="bengali-input w-full bg-white text-gray-800 rounded-xl py-4 px-4 shadow-sm" 
-                        placeholder="এখানে উত্তর লিখুন..." 
+                        class="bengali-input w-full bg-white text-gray-800 rounded-xl py-4 px-4 shadow-sm uppercase" 
+                        placeholder="Type your answer here..." 
                         autocomplete="off" spellcheck="false">
                     
-                    <button id="hint-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors btn-press" title="হিন্ট নিন">
+                    <button id="hint-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors btn-press" title="Use Hint">
                         <i class="fa-solid fa-lightbulb"></i>
                     </button>
                 </div>
@@ -206,7 +206,7 @@
 
             <!-- Submit Button -->
             <button id="submit-btn" class="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2">
-                <span>উত্তর দিন</span>
+                <span>Submit Answer</span>
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
@@ -219,18 +219,18 @@
                 <i class="fa-solid fa-magnifying-glass text-5xl text-pink-500"></i>
             </div>
             <h1 class="text-4xl font-bold text-gray-800 mb-2">WordHunt</h1>
-            <p class="text-gray-500 mb-8 font-medium">বাংলা ধাঁধার মজার খেলা</p>
+            <p class="text-gray-500 mb-8 font-medium">A Fun Riddle Game</p>
             
             <div class="bg-pink-50 rounded-xl p-4 mb-8 text-left text-sm text-gray-700 border border-pink-100">
                 <ul class="space-y-2">
-                    <li><i class="fa-solid fa-check text-pink-500 mr-2"></i> ধাঁধা পড়ে সঠিক শব্দ খুঁজুন।</li>
-                    <li><i class="fa-solid fa-clock text-pink-500 mr-2"></i> সময় মাত্র ৩০ সেকেন্ড।</li>
-                    <li><i class="fa-solid fa-lightbulb text-pink-500 mr-2"></i> আটকে গেলে হিন্ট ব্যবহার করুন।</li>
+                    <li><i class="fa-solid fa-check text-pink-500 mr-2"></i> Read the riddle and guess the word.</li>
+                    <li><i class="fa-solid fa-clock text-pink-500 mr-2"></i> You only have 30 seconds.</li>
+                    <li><i class="fa-solid fa-lightbulb text-pink-500 mr-2"></i> Use hints if you get stuck.</li>
                 </ul>
             </div>
 
             <button id="start-game-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-xl">
-                খেলা শুরু করুন
+                Start Game
             </button>
         </div>
     </div>
@@ -249,52 +249,45 @@
 
             <div class="bg-gray-50 rounded-xl p-4 mb-6 flex justify-around">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">আপনার স্কোর</p>
-                    <p id="modal-score" class="text-2xl font-bold text-pink-600">০</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">YOUR SCORE</p>
+                    <p id="modal-score" class="text-2xl font-bold text-pink-600">0</p>
                 </div>
                 <div class="w-px bg-gray-200"></div>
                 <div>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">সঠিক উত্তর</p>
-                    <p id="modal-answer" class="text-lg font-bold text-gray-800 mt-1">-</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">CORRECT ANSWER</p>
+                    <p id="modal-answer" class="text-lg font-bold text-gray-800 mt-1 uppercase">-</p>
                 </div>
             </div>
 
             <button id="next-action-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press">
-                পরের লেভেল
+                Next Level
             </button>
         </div>
     </div>
 
     <script>
-        // Number Converter (Eng to Bn)
-        const engToBnNumbers = {
-            '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
-            '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
-        };
-        const toBnNum = (num) => String(num).split('').map(c => engToBnNumbers[c] || c).join('');
-
         // Game Data (Riddles)
         const riddlesDatabase = [
-            { question: "আকাশেতে ওঠে সে, আলো দেয় রাতে।", answer: "চাঁদ" },
-            { question: "চার পায়ে হাঁটে, কিন্তু এক পাও যেতে পারে না।", answer: "টেবিল" },
-            { question: "কাঁচা থাকতে সবুজ, পাকলে হয় হলুদ।", answer: "কলা" },
-            { question: "জল খায় না, তবু নদী পার হয়।", answer: "নৌকা" },
-            { question: "চোখ নেই তবু কাঁদে, ডানা নেই তবু ওড়ে।", answer: "মেঘ" },
-            { question: "যত মুছবে, তত কালো হবে।", answer: "ব্ল্যাকবোর্ড" },
-            { question: "এক ঘরেতে বত্রিশ ভাই, মারামারি নেইকো ছাই।", answer: "দাঁত" },
-            { question: "কোন জিনিস কাটলে বড় হয়?", answer: "পুকুর" },
-            { question: "লাল গাভীটি ঘাস খায়, জল খেলে মরে যায়।", answer: "আগুন" },
-            { question: "তিন অক্ষরে নাম তার, জলে বাস করে। মাঝের অক্ষর কেটে দিলে, আকাশেতে ওড়ে।", answer: "বক" }, // Simplified version
-            { question: "মাথা আছে কিন্তু চুল নেই, পেট আছে কিন্তু নাড়িভুঁড়ি নেই।", answer: "কলসি" },
-            { question: "সকালে চার পায়ে, দুপুরে দুই পায়ে, আর সন্ধ্যায় তিন পায়ে হাঁটে কে?", answer: "মানুষ" },
-            { question: "গলা আছে, মাথা নেই। হাত আছে, আঙুল নেই।", answer: "শার্ট" },
-            { question: "কোন ফলের বীজ ফলের বাইরে থাকে?", answer: "কাজুবাদাম" },
-            { question: "এক বুড়ির বারোটা ছেলে, এক একটা ছেলের ত্রিশটা নাতি।", answer: "বছর" }, // Year, Months, Days
-            { question: "ছোট্ট একটা ঘরে, হাজার মানুষ বাস করে।", answer: "মৌচাক" },
-            { question: "যেতে বলি তবু যায় না, ধরতে গেলে ধরা দেয় না।", answer: "ছায়া" },
-            { question: "কোন প্রশ্নের উত্তর কখনও 'হ্যাঁ' দেওয়া যায় না?", answer: "ঘুমিয়েছ" },
-            { question: "আসে কিন্তু কখনো পৌঁছায় না।", answer: "আগামীকাল" },
-            { question: "যত টানো, তত ছোট হয়।", answer: "সিগারেট" }
+            { question: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind.", answer: "echo" },
+            { question: "You measure my life in hours and I serve you by expiring. I'm quick when I'm thin and slow when I'm fat.", answer: "candle" },
+            { question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish.", answer: "map" },
+            { question: "What is seen in the middle of March and April that can't be seen at the beginning or end of either month?", answer: "r" },
+            { question: "What has keys but can't open locks?", answer: "piano" },
+            { question: "I have a tail and a head, but no body. What am I?", answer: "coin" },
+            { question: "What has words, but never speaks?", answer: "book" },
+            { question: "What runs all around a backyard, yet never moves?", answer: "fence" },
+            { question: "What can fill a room but takes up no space?", answer: "light" },
+            { question: "If you drop me I'm sure to crack, but give me a smile and I'll always smile back.", answer: "mirror" },
+            { question: "The more of this there is, the less you see.", answer: "darkness" },
+            { question: "What has many teeth, but cannot bite?", answer: "comb" },
+            { question: "What gets wet while drying?", answer: "towel" },
+            { question: "What belongs to you, but other people use it more than you do?", answer: "name" },
+            { question: "I am tall when I'm young, and I'm short when I'm old.", answer: "pencil" },
+            { question: "What has one eye, but can't see?", answer: "needle" },
+            { question: "What has hands but cannot clap?", answer: "clock" },
+            { question: "What has to be broken before you can use it?", answer: "egg" },
+            { question: "I have branches, but no fruit, trunk or leaves. What am I?", answer: "bank" },
+            { question: "What goes up but never comes down?", answer: "age" }
         ];
 
         // Ensure we have up to 100 levels by repeating/shuffling if needed, 
@@ -364,7 +357,7 @@
             elements.feedback.textContent = '';
             elements.feedback.className = 'text-center text-sm mt-2 h-5 font-medium';
             
-            elements.level.innerHTML = `${toBnNum(currentLevel)}<span class="text-sm font-normal text-pink-200">/${toBnNum(totalLevels)}</span>`;
+            elements.level.innerHTML = `${currentLevel}<span class="text-sm font-normal text-pink-200">/${totalLevels}</span>`;
             elements.riddle.textContent = currentRiddle.question;
             
             createWordSlots(currentRiddle.answer);
@@ -414,26 +407,26 @@
         }
 
         function updateTimerDisplay() {
-            elements.timerText.textContent = `${toBnNum(timeLeft)} সেঃ`;
+            elements.timerText.textContent = `${timeLeft}s`;
         }
 
         function updateScoreDisplay() {
-            elements.score.textContent = toBnNum(score);
+            elements.score.textContent = score;
         }
 
         function checkAnswer() {
             if (timeLeft <= 0) return; // Prevent submission if time is up
             
-            const userAnswer = elements.input.value.trim();
+            const userAnswer = elements.input.value.trim().toLowerCase();
             if (!userAnswer) {
-                showFeedback("দয়া করে উত্তর লিখুন!", "text-yellow-500");
+                showFeedback("Please type an answer!", "text-yellow-500");
                 animateElement(elements.input, 'animate-shake');
                 return;
             }
 
             clearInterval(timerInterval);
 
-            if (userAnswer === currentRiddle.answer) {
+            if (userAnswer === currentRiddle.answer.toLowerCase()) {
                 // Correct
                 const pointsEarned = 10 + timeLeft; // Base 10 + bonus for time
                 score += pointsEarned;
@@ -441,7 +434,7 @@
                 showModal('success');
             } else {
                 // Incorrect
-                showFeedback("ভুল উত্তর! আবার চেষ্টা করুন।", "text-red-500");
+                showFeedback("Wrong answer! Try again.", "text-red-500");
                 animateElement(elements.input, 'animate-shake');
                 startTimer(); // Resume timer
             }
@@ -453,7 +446,7 @@
             const answerChars = Array.from(currentRiddle.answer);
             if (revealedHints < answerChars.length) {
                 const slots = elements.slots.children;
-                slots[revealedHints].textContent = answerChars[revealedHints];
+                slots[revealedHints].textContent = answerChars[revealedHints].toUpperCase();
                 
                 // Deduct score for using hint (optional, but makes it competitive)
                 if (score > 2) {
@@ -464,10 +457,10 @@
                 revealedHints++;
                 
                 // Partially fill the input box to help
-                elements.input.value = answerChars.slice(0, revealedHints).join('');
+                elements.input.value = answerChars.slice(0, revealedHints).join('').toUpperCase();
                 elements.input.focus();
             } else {
-                showFeedback("সব হিন্ট ব্যবহার করা হয়েছে!", "text-yellow-500");
+                showFeedback("All hints used!", "text-yellow-500");
             }
         }
 
@@ -500,25 +493,25 @@
             card.classList.remove('scale-90');
             card.classList.add('scale-100');
 
-            elements.modalScore.textContent = toBnNum(score);
+            elements.modalScore.textContent = score;
             elements.modalAnswer.textContent = currentRiddle.answer;
 
             if (type === 'success') {
                 elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-green-500';
                 elements.resultIcon.className = 'fa-solid fa-check text-4xl text-white';
-                elements.modalTitle.textContent = "দারুণ!";
+                elements.modalTitle.textContent = "Awesome!";
                 elements.modalTitle.className = "text-3xl font-bold mb-2 text-green-600";
-                elements.modalMsg.textContent = "সঠিক উত্তর দিয়েছেন।";
-                buttons.next.textContent = "পরের লেভেল";
+                elements.modalMsg.textContent = "You got the correct answer.";
+                buttons.next.textContent = "Next Level";
                 buttons.next.className = "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
                 buttons.next.onclick = nextLevel;
             } else if (type === 'timeout') {
                 elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-red-500';
                 elements.resultIcon.className = 'fa-solid fa-clock text-4xl text-white';
-                elements.modalTitle.textContent = "সময় শেষ!";
+                elements.modalTitle.textContent = "Time's up!";
                 elements.modalTitle.className = "text-3xl font-bold mb-2 text-red-600";
-                elements.modalMsg.textContent = "আপনি সঠিক উত্তর দিতে পারেননি।";
-                buttons.next.textContent = "আবার চেষ্টা করুন";
+                elements.modalMsg.textContent = "You couldn't answer in time.";
+                buttons.next.textContent = "Try Again";
                 buttons.next.className = "w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
                 buttons.next.onclick = retryLevel;
             }
@@ -553,10 +546,10 @@
             showModal('success'); // Reusing modal UI
             elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-yellow-400';
             elements.resultIcon.className = 'fa-solid fa-trophy text-4xl text-white';
-            elements.modalTitle.textContent = "অভিনন্দন!";
+            elements.modalTitle.textContent = "Congratulations!";
             elements.modalTitle.className = "text-3xl font-bold mb-2 text-yellow-500";
-            elements.modalMsg.textContent = "আপনি ১০০ টি লেভেল সম্পূর্ণ করেছেন!";
-            buttons.next.textContent = "আবার খেলুন";
+            elements.modalMsg.textContent = "You have completed 100 levels!";
+            buttons.next.textContent = "Play Again";
             buttons.next.className = "w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
             buttons.next.onclick = () => {
                 hideModal();
