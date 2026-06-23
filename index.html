@@ -9,6 +9,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- QR Code Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -38,17 +42,16 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #fdf2f8; /* pink-50 */
+            background-color: #fdf2f8;
             touch-action: manipulation;
-            overflow: hidden; /* Prevent scrolling on mobile */
+            overflow: hidden;
         }
 
-        /* Custom Animations */
+        /* Animations */
         @keyframes popIn {
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -56,42 +59,27 @@
             75% { transform: translateX(-5px); }
         }
 
-        @keyframes pulse-pink {
-            0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
-        }
+        .animate-pop { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
 
-        .animate-pop {
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        .animate-shake {
-            animation: shake 0.4s ease-in-out;
-        }
-
-        /* Styling the timer progress bar */
+        /* Timer Bar */
         .timer-bar-container {
             width: 100%;
-            background-color: #fce7f3; /* pink-100 */
+            background-color: #fce7f3;
             border-radius: 9999px;
             overflow: hidden;
             height: 12px;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-
         .timer-bar {
             height: 100%;
             background: linear-gradient(90deg, #f472b6, #ec4899);
             width: 100%;
             transition: width 1s linear, background-color 0.3s ease;
         }
+        .timer-warning { background: linear-gradient(90deg, #f87171, #ef4444); }
 
-        .timer-warning {
-            background: linear-gradient(90deg, #f87171, #ef4444);
-        }
-
-        /* Glassmorphism effects for cards */
+        /* Glassmorphism */
         .glass-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
@@ -99,7 +87,7 @@
             box-shadow: 0 10px 25px rgba(219, 39, 119, 0.1);
         }
 
-        /* Beautiful Input Field */
+        /* Input Field */
         .bengali-input {
             text-align: center;
             font-size: 1.5rem;
@@ -107,68 +95,199 @@
             border: 2px solid #fbcfe8;
             transition: all 0.3s ease;
         }
-        
         .bengali-input:focus {
             outline: none;
             border-color: #ec4899;
             box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
         }
 
-        /* Button click effect */
-        .btn-press:active {
-            transform: scale(0.95);
-        }
+        .btn-press:active { transform: scale(0.95); }
 
-        /* Character slots for visual hint */
+        /* Char Slots */
         .char-slot {
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            width: 40px;
-            height: 45px;
-            margin: 0 4px;
+            width: 35px;
+            height: 40px;
+            margin: 0 3px;
             border-bottom: 3px solid #db2777;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: #db2777;
+        }
+
+        /* QR Scanner Video Fix */
+        #qr-reader video {
+            width: 100% !important;
+            border-radius: 0.75rem;
         }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-center relative">
 
+    <!-- App Install Button (Absolute Top Right) -->
+    <button id="install-btn" class="hidden absolute top-4 right-4 z-50 bg-white text-pink-600 font-bold py-2 px-4 rounded-full shadow-lg border-2 border-pink-200 btn-press flex items-center gap-2 text-sm">
+        <i class="fa-solid fa-download"></i> App Download Korun
+    </button>
+
+    <!-- Loading Overlay for Firebase -->
+    <div id="loading-screen" class="w-full h-full flex flex-col items-center justify-center bg-pink-50 absolute inset-0 z-50">
+        <i class="fa-solid fa-spinner fa-spin text-5xl text-pink-500 mb-4"></i>
+        <p class="text-pink-600 font-medium">Game load hocche...</p>
+    </div>
+
+    <!-- Mode Selection Screen -->
+    <div id="mode-screen" class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600 p-6 absolute inset-0 z-40 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-pop">
+            <div class="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i class="fa-solid fa-magnifying-glass text-5xl text-pink-500"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">WordHunt</h1>
+            <p class="text-gray-500 mb-8 font-medium">Majar Dhada Game</p>
+            
+            <div class="space-y-4">
+                <button id="btn-botplay" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-robot"></i> Eka Khelun (BotPlay)
+                </button>
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">Nokol ba</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+                <button id="btn-duo-menu" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-user-group"></i> Dujon Khelun (Duo)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duo Mode Menu Screen -->
+    <div id="duo-menu-screen" class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-400 to-indigo-600 p-6 absolute inset-0 z-40 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-pop relative">
+            <button class="btn-back absolute top-4 left-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 mt-4">Duo Mode</h2>
+            
+            <div class="space-y-4">
+                <button id="btn-create-room" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Room Banan
+                </button>
+                <button id="btn-join-room" class="w-full border-2 border-indigo-500 text-indigo-600 font-bold py-4 rounded-xl shadow-sm transition-all btn-press text-lg flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Room e Join Korun
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duo Create Room Screen -->
+    <div id="duo-create-screen" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 p-6 absolute inset-0 z-40 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-pop relative overflow-y-auto max-h-full">
+            <button class="btn-back absolute top-4 left-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 mt-6 text-center">Notun Dhada Din</h2>
+            
+            <!-- Input Form -->
+            <div id="create-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dhada (Riddle)</label>
+                    <textarea id="duo-input-riddle" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-indigo-500 outline-none" rows="3" placeholder="Apnar dhada ekhane likhun..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Uttor (Answer)</label>
+                    <input type="text" id="duo-input-answer" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-indigo-500 outline-none uppercase" placeholder="Sothik uttor">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Somoy (Seconds)</label>
+                    <input type="number" id="duo-input-time" value="30" class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-indigo-500 outline-none">
+                </div>
+                <button id="btn-submit-room" class="w-full bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg btn-press mt-2">
+                    Room Toiri Korun
+                </button>
+                <p id="create-error" class="text-red-500 text-sm text-center hidden"></p>
+            </div>
+
+            <!-- Room Created View -->
+            <div id="room-waiting-view" class="hidden flex-col items-center justify-center text-center mt-4">
+                <p class="text-gray-600 mb-2">Bondhu ke code ba QR din!</p>
+                <div class="bg-indigo-100 px-6 py-3 rounded-xl mb-4">
+                    <span class="text-3xl font-bold tracking-widest text-indigo-700" id="display-room-code">00000</span>
+                </div>
+                <div id="qrcode-container" class="bg-white p-2 border-4 border-indigo-100 rounded-xl inline-block mb-4"></div>
+                <div class="flex items-center justify-center gap-2 text-indigo-500 font-medium animate-pulse">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Opekkha kora hocche...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duo Join Screen -->
+    <div id="duo-join-screen" class="w-full h-full flex flex-col items-center justify-center bg-gray-50 p-6 absolute inset-0 z-40 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl animate-pop relative">
+            <button class="btn-back absolute top-4 left-4 text-gray-400 hover:text-gray-600" id="btn-back-join"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 mt-6">Room e Join Korun</h2>
+            
+            <div id="join-input-section">
+                <input type="text" id="join-room-code" class="w-full border-2 border-gray-200 rounded-xl p-4 text-center text-2xl tracking-widest font-bold focus:border-indigo-500 outline-none mb-4" placeholder="5 Digit Code" maxlength="5">
+                
+                <button id="btn-join-submit" class="w-full bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg btn-press mb-4">
+                    Join Korun
+                </button>
+
+                <div class="relative flex py-2 items-center mb-4">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">Othoba</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <button id="btn-start-scanner" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl shadow-lg btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-qrcode"></i> QR Code Scan Korun
+                </button>
+            </div>
+
+            <!-- Scanner Section -->
+            <div id="scanner-section" class="hidden flex-col items-center">
+                <div id="qr-reader" class="w-full bg-black rounded-xl overflow-hidden mb-4"></div>
+                <button id="btn-stop-scanner" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg btn-press">
+                    Cancel Scan
+                </button>
+            </div>
+            <p id="join-error" class="text-red-500 text-sm mt-4 hidden"></p>
+        </div>
+    </div>
+
     <!-- Main Game Container -->
-    <div id="game-screen" class="w-full max-w-md h-full sm:h-auto sm:min-h-[600px] flex flex-col bg-white sm:rounded-3xl shadow-2xl relative overflow-hidden hidden">
+    <div id="game-screen" class="w-full max-w-md h-full sm:h-auto sm:min-h-[600px] flex flex-col bg-white sm:rounded-3xl shadow-2xl relative overflow-hidden hidden z-30">
         
         <!-- Header Strip -->
-        <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 flex justify-between items-center rounded-b-2xl shadow-md z-10">
+        <div id="game-header" class="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 flex justify-between items-center rounded-b-2xl shadow-md z-10">
             <div class="flex items-center gap-2">
                 <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
                     <i class="fa-solid fa-star text-yellow-300"></i>
                 </div>
-                <div>
+                <div id="score-container">
                     <p class="text-xs text-pink-100 font-medium">SCORE</p>
                     <p id="score-display" class="font-bold text-xl leading-none">0</p>
                 </div>
             </div>
             <h1 class="text-2xl font-bold tracking-wider">WordHunt</h1>
             <div class="flex items-center gap-2 text-right">
-                <div>
-                    <p class="text-xs text-pink-100 font-medium">LEVEL</p>
+                <div id="level-container">
+                    <p class="text-xs text-pink-100 font-medium" id="level-label">LEVEL</p>
                     <p id="level-display" class="font-bold text-xl leading-none">1<span class="text-sm font-normal text-pink-200">/100</span></p>
-                </div>
-                <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
-                    <i class="fa-solid fa-layer-group text-white"></i>
                 </div>
             </div>
         </div>
 
         <!-- Game Area -->
         <div class="flex-1 p-6 flex flex-col relative z-0">
-            
+            <!-- Quit Button (Duo Mode only) -->
+            <button id="btn-quit-game" class="hidden absolute top-2 right-4 text-gray-400 hover:text-red-500 z-20 text-sm font-medium">
+                <i class="fa-solid fa-right-from-bracket"></i> Beriye Jan
+            </button>
+
             <!-- Timer Section -->
-            <div class="mb-6">
+            <div class="mb-4 mt-2">
                 <div class="flex justify-between items-end mb-2">
-                    <span class="text-gray-500 text-sm font-medium"><i class="fa-regular fa-clock mr-1"></i> Time Left</span>
+                    <span class="text-gray-500 text-sm font-medium"><i class="fa-regular fa-clock mr-1"></i> Somoy Baki</span>
                     <span id="timer-text" class="text-pink-600 font-bold text-xl">30s</span>
                 </div>
                 <div class="timer-bar-container">
@@ -177,8 +296,8 @@
             </div>
 
             <!-- Riddle Card -->
-            <div class="glass-card rounded-2xl p-6 mb-8 text-center flex-1 flex flex-col justify-center relative">
-                <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-pink-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
+            <div class="glass-card rounded-2xl p-6 mb-6 text-center flex-1 flex flex-col justify-center relative min-h-[150px]">
+                <div id="riddle-icon-bg" class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-pink-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
                     <i class="fa-solid fa-question text-xl"></i>
                 </div>
                 <p id="riddle-text" class="text-xl md:text-2xl text-gray-800 font-semibold leading-relaxed mt-4">
@@ -188,50 +307,33 @@
 
             <!-- Input Area -->
             <div class="w-full mb-4">
-                <div id="word-slots" class="flex justify-center mb-4 flex-wrap">
+                <div id="word-slots" class="flex justify-center mb-4 flex-wrap gap-y-2">
                     <!-- Slots will be generated here -->
                 </div>
                 <div class="relative">
                     <input type="text" id="answer-input" 
                         class="bengali-input w-full bg-white text-gray-800 rounded-xl py-4 px-4 shadow-sm uppercase" 
-                        placeholder="Type your answer here..." 
+                        placeholder="Sampurna uttor likhun..." 
                         autocomplete="off" spellcheck="false">
                     
-                    <button id="hint-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors btn-press" title="Use Hint">
+                    <button id="hint-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors btn-press" title="Hint Nin">
                         <i class="fa-solid fa-lightbulb"></i>
                     </button>
                 </div>
                 <p id="feedback-msg" class="text-center text-sm mt-2 h-5 font-medium"></p>
             </div>
 
-            <!-- Submit Button -->
-            <button id="submit-btn" class="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2">
-                <span>Submit Answer</span>
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Start Screen -->
-    <div id="start-screen" class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600 p-6 absolute inset-0 z-50">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-pop">
-            <div class="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <i class="fa-solid fa-magnifying-glass text-5xl text-pink-500"></i>
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+                <button id="submit-btn" class="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2">
+                    <span>Uttor Din</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button id="skip-btn" class="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl shadow-sm transition-all btn-press text-md flex justify-center items-center gap-2 border border-gray-200">
+                    <span>Skip Korun</span>
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
             </div>
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">WordHunt</h1>
-            <p class="text-gray-500 mb-8 font-medium">A Fun Riddle Game</p>
-            
-            <div class="bg-pink-50 rounded-xl p-4 mb-8 text-left text-sm text-gray-700 border border-pink-100">
-                <ul class="space-y-2">
-                    <li><i class="fa-solid fa-check text-pink-500 mr-2"></i> Read the riddle and guess the word.</li>
-                    <li><i class="fa-solid fa-clock text-pink-500 mr-2"></i> You only have 30 seconds.</li>
-                    <li><i class="fa-solid fa-lightbulb text-pink-500 mr-2"></i> Use hints if you get stuck.</li>
-                </ul>
-            </div>
-
-            <button id="start-game-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-xl">
-                Start Game
-            </button>
         </div>
     </div>
 
@@ -239,7 +341,6 @@
     <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div id="result-card" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl mx-4 transform scale-90 transition-transform duration-300">
             
-            <!-- Result Icon -->
             <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg">
                 <i id="result-icon" class="fa-solid text-3xl text-white"></i>
             </div>
@@ -248,25 +349,97 @@
             <p id="result-msg" class="text-gray-600 mb-6"></p>
 
             <div class="bg-gray-50 rounded-xl p-4 mb-6 flex justify-around">
-                <div>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">YOUR SCORE</p>
+                <div id="modal-score-box">
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">SCORE</p>
                     <p id="modal-score" class="text-2xl font-bold text-pink-600">0</p>
                 </div>
-                <div class="w-px bg-gray-200"></div>
+                <div class="w-px bg-gray-200" id="modal-divider"></div>
                 <div>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">CORRECT ANSWER</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">SOTHIK UTTOR</p>
                     <p id="modal-answer" class="text-lg font-bold text-gray-800 mt-1 uppercase">-</p>
                 </div>
             </div>
 
             <button id="next-action-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press">
-                Next Level
+                Poroborti Level
+            </button>
+            <button id="home-action-btn" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl shadow-sm mt-3 transition-all btn-press hidden">
+                Main Menu Te Jan
             </button>
         </div>
     </div>
 
-    <script>
-        // Game Data (Riddles)
+    <!-- Firebase Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Game Scope
+        window.GameApp = {
+            db: null,
+            auth: null,
+            user: null,
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'wordhunt-app',
+            gameMode: 'botplay', // 'botplay' or 'duo'
+            duoRoomId: null,
+            duoUnsubscribe: null,
+            html5QrcodeScanner: null
+        };
+
+        // Firebase Setup
+        async function initFirebase() {
+            try {
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                if (!firebaseConfig) throw new Error("Firebase config missing");
+                
+                const app = initializeApp(firebaseConfig);
+                GameApp.auth = getAuth(app);
+                GameApp.db = getFirestore(app);
+
+                // Strict Rule: Auth Before Queries
+                await signInAnonymously(GameApp.auth);
+                onAuthStateChanged(GameApp.auth, (user) => {
+                    if (user) {
+                        GameApp.user = user;
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        document.getElementById('mode-screen').classList.remove('hidden');
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                // Fallback for UI if Firebase fails (let them play BotPlay at least)
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('mode-screen').classList.remove('hidden');
+            }
+        }
+
+        initFirebase();
+
+        // ----------------------------------------------------
+        // App Logic & UI
+        // ----------------------------------------------------
+        
+        // PWA Install Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').classList.remove('hidden');
+        });
+        
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('install-btn').classList.add('hidden');
+            } else {
+                alert("Browser theke 'Add to Home Screen' option ti select korun app ti install korar jonno.");
+            }
+        });
+
+        // BotPlay Data
         const riddlesDatabase = [
             { question: "Akashe othe shey, aalo dey raate.", answer: "chaad" },
             { question: "Char paye hate, kintu jete pare na.", answer: "table" },
@@ -290,113 +463,157 @@
             { question: "Buk ache kintu pet nei, mukh ache kintu matha nei.", answer: "nodi" }
         ];
 
-        // Ensure we have up to 100 levels by repeating/shuffling if needed, 
-        // but for this build we'll loop through the database to represent 100 levels.
         let allLevels = [];
-        for (let i = 0; i < 100; i++) {
-            allLevels.push(riddlesDatabase[i % riddlesDatabase.length]);
-        }
+        for (let i = 0; i < 100; i++) { allLevels.push(riddlesDatabase[i % riddlesDatabase.length]); }
 
-        // Game State Variables
+        // State variables
         let currentLevel = 1;
-        const totalLevels = 100;
         let score = 0;
         let timeLeft = 30;
         let timerInterval;
         let currentRiddle = null;
-        let revealedHints = 0;
+        let maxTime = 30;
+        
+        // Arrays for tracking random hints
+        let answerCharacters = [];
+        let revealedIndices = [];
 
         // DOM Elements
         const screens = {
-            start: document.getElementById('start-screen'),
+            mode: document.getElementById('mode-screen'),
+            duoMenu: document.getElementById('duo-menu-screen'),
+            duoCreate: document.getElementById('duo-create-screen'),
+            duoJoin: document.getElementById('duo-join-screen'),
             game: document.getElementById('game-screen'),
             modal: document.getElementById('result-modal')
         };
-        const elements = {
+        const els = {
             level: document.getElementById('level-display'),
+            levelLabel: document.getElementById('level-label'),
             score: document.getElementById('score-display'),
             timerText: document.getElementById('timer-text'),
             timerBar: document.getElementById('timer-bar'),
             riddle: document.getElementById('riddle-text'),
             input: document.getElementById('answer-input'),
             slots: document.getElementById('word-slots'),
-            feedback: document.getElementById('feedback-msg'),
-            modalTitle: document.getElementById('result-title'),
-            modalMsg: document.getElementById('result-msg'),
-            modalScore: document.getElementById('modal-score'),
-            modalAnswer: document.getElementById('modal-answer'),
-            resultIconContainer: document.getElementById('result-icon-container'),
-            resultIcon: document.getElementById('result-icon')
-        };
-        const buttons = {
-            start: document.getElementById('start-game-btn'),
-            submit: document.getElementById('submit-btn'),
-            hint: document.getElementById('hint-btn'),
-            next: document.getElementById('next-action-btn')
+            feedback: document.getElementById('feedback-msg')
         };
 
-        function initGame() {
+        // Navigation
+        document.getElementById('btn-botplay').onclick = () => {
+            GameApp.gameMode = 'botplay';
+            screens.mode.classList.add('hidden');
+            screens.game.classList.remove('hidden');
+            initBotPlay();
+        };
+
+        document.getElementById('btn-duo-menu').onclick = () => {
+            if(!GameApp.user) { alert("Duo khelte internet connection dorkar!"); return; }
+            screens.mode.classList.add('hidden');
+            screens.duoMenu.classList.remove('hidden');
+        };
+
+        document.querySelectorAll('.btn-back').forEach(btn => {
+            btn.onclick = () => {
+                screens.duoCreate.classList.add('hidden');
+                screens.duoJoin.classList.add('hidden');
+                screens.duoMenu.classList.remove('hidden');
+                if(GameApp.duoUnsubscribe) GameApp.duoUnsubscribe();
+            };
+        });
+
+        document.getElementById('btn-back-join').onclick = () => {
+            if(GameApp.html5QrcodeScanner) {
+                GameApp.html5QrcodeScanner.stop().catch(e => console.log(e));
+                document.getElementById('scanner-section').classList.add('hidden');
+                document.getElementById('join-input-section').classList.remove('hidden');
+            }
+            screens.duoJoin.classList.add('hidden');
+            screens.duoMenu.classList.remove('hidden');
+        };
+
+        document.getElementById('btn-create-room').onclick = () => {
+            screens.duoMenu.classList.add('hidden');
+            screens.duoCreate.classList.remove('hidden');
+            document.getElementById('create-form').classList.remove('hidden');
+            document.getElementById('room-waiting-view').classList.add('hidden');
+        };
+
+        document.getElementById('btn-join-room').onclick = () => {
+            screens.duoMenu.classList.add('hidden');
+            screens.duoJoin.classList.remove('hidden');
+        };
+
+        document.getElementById('btn-quit-game').onclick = () => {
+            clearInterval(timerInterval);
+            screens.game.classList.add('hidden');
+            screens.mode.classList.remove('hidden');
+            if(GameApp.duoUnsubscribe) GameApp.duoUnsubscribe();
+        };
+
+        // BotPlay Logic
+        function initBotPlay() {
             currentLevel = 1;
             score = 0;
             updateScoreDisplay();
-            screens.start.style.display = 'none';
-            screens.game.classList.remove('hidden');
+            document.getElementById('game-header').className = "bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 flex justify-between items-center rounded-b-2xl shadow-md z-10";
+            document.getElementById('skip-btn').classList.remove('hidden');
+            document.getElementById('btn-quit-game').classList.add('hidden');
+            els.level.parentElement.classList.remove('hidden');
+            document.getElementById('score-container').classList.remove('hidden');
             loadLevel();
         }
 
         function loadLevel() {
-            if (currentLevel > totalLevels) {
-                showGameComplete();
-                return;
-            }
+            if (currentLevel > 100) return showGameComplete();
 
             currentRiddle = allLevels[currentLevel - 1];
-            revealedHints = 0;
-            elements.input.value = '';
-            elements.input.focus();
-            elements.feedback.textContent = '';
-            elements.feedback.className = 'text-center text-sm mt-2 h-5 font-medium';
-            
-            elements.level.innerHTML = `${currentLevel}<span class="text-sm font-normal text-pink-200">/${totalLevels}</span>`;
-            elements.riddle.textContent = currentRiddle.question;
-            
-            createWordSlots(currentRiddle.answer);
-            
+            maxTime = 30;
+            setupGameBoard();
+            els.level.innerHTML = `${currentLevel}<span class="text-sm font-normal text-pink-200">/100</span>`;
             startTimer();
         }
 
-        function createWordSlots(word) {
-            elements.slots.innerHTML = '';
-            // For Bengali, simple length based on characters. 
-            // Note: complex conjuncts might be treated as multiple chars in JS, 
-            // but for simple game visuals, we just use string length.
-            const len = Array.from(word).length; 
-            for (let i = 0; i < len; i++) {
+        // Shared Game Logic
+        function setupGameBoard() {
+            els.input.value = '';
+            els.input.focus();
+            els.feedback.textContent = '';
+            els.riddle.textContent = currentRiddle.question;
+            
+            // Setup Random Hints Arrays
+            const word = currentRiddle.answer;
+            answerCharacters = Array.from(word);
+            revealedIndices = [];
+            
+            els.slots.innerHTML = '';
+            for (let i = 0; i < answerCharacters.length; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'char-slot';
-                elements.slots.appendChild(slot);
+                slot.textContent = ''; // empty initially
+                els.slots.appendChild(slot);
             }
         }
 
         function startTimer() {
             clearInterval(timerInterval);
-            timeLeft = 30;
+            timeLeft = maxTime;
             updateTimerDisplay();
-            elements.timerBar.style.width = '100%';
-            elements.timerBar.classList.remove('timer-warning');
+            els.timerBar.style.width = '100%';
+            els.timerBar.classList.remove('timer-warning');
 
             timerInterval = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay();
                 
-                const percentage = (timeLeft / 30) * 100;
-                elements.timerBar.style.width = `${percentage}%`;
+                const percentage = (timeLeft / maxTime) * 100;
+                els.timerBar.style.width = `${percentage}%`;
 
                 if (timeLeft <= 10) {
-                    elements.timerBar.classList.add('timer-warning');
-                    elements.timerText.classList.replace('text-pink-600', 'text-red-500');
+                    els.timerBar.classList.add('timer-warning');
+                    els.timerText.classList.replace('text-pink-600', 'text-red-500');
                 } else {
-                    elements.timerText.classList.replace('text-red-500', 'text-pink-600');
+                    els.timerText.classList.replace('text-red-500', 'text-pink-600');
                 }
 
                 if (timeLeft <= 0) {
@@ -406,86 +623,93 @@
             }, 1000);
         }
 
-        function updateTimerDisplay() {
-            elements.timerText.textContent = `${timeLeft}s`;
-        }
+        function updateTimerDisplay() { els.timerText.textContent = `${timeLeft}s`; }
+        function updateScoreDisplay() { els.score.textContent = score; }
 
-        function updateScoreDisplay() {
-            elements.score.textContent = score;
-        }
+        document.getElementById('submit-btn').onclick = checkAnswer;
+        els.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
 
         function checkAnswer() {
-            if (timeLeft <= 0) return; // Prevent submission if time is up
-            
-            const userAnswer = elements.input.value.trim().toLowerCase();
+            if (timeLeft <= 0) return;
+            const userAnswer = els.input.value.trim().toLowerCase();
             if (!userAnswer) {
-                showFeedback("Please type an answer!", "text-yellow-500");
-                animateElement(elements.input, 'animate-shake');
+                showFeedback("Kichu likhe uttor din!", "text-yellow-500");
+                animateElement(els.input, 'animate-shake');
                 return;
             }
 
             clearInterval(timerInterval);
 
             if (userAnswer === currentRiddle.answer.toLowerCase()) {
-                // Correct
-                const pointsEarned = 10 + timeLeft; // Base 10 + bonus for time
-                score += pointsEarned;
-                updateScoreDisplay();
-                showModal('success');
+                if(GameApp.gameMode === 'botplay') {
+                    score += (10 + timeLeft);
+                    updateScoreDisplay();
+                    showModal('success', "Darun!", "Sothik uttor diyecho.");
+                } else {
+                    finishDuoGame('won');
+                }
             } else {
-                // Incorrect
-                showFeedback("Wrong answer! Try again.", "text-red-500");
-                animateElement(elements.input, 'animate-shake');
-                startTimer(); // Resume timer
+                showFeedback("Bhul uttor! Abar chesta korun.", "text-red-500");
+                animateElement(els.input, 'animate-shake');
+                startTimer(); 
             }
         }
 
-        function useHint() {
+        // New Hint Logic: Random Reveal
+        document.getElementById('hint-btn').onclick = () => {
             if (timeLeft <= 0) return;
             
-            const answerChars = Array.from(currentRiddle.answer);
-            if (revealedHints < answerChars.length) {
-                const slots = elements.slots.children;
-                slots[revealedHints].textContent = answerChars[revealedHints].toUpperCase();
+            let unrevealed = [];
+            for (let i = 0; i < answerCharacters.length; i++) {
+                if (!revealedIndices.includes(i)) unrevealed.push(i);
+            }
+
+            if (unrevealed.length > 0) {
+                // Pick random index
+                const randomIndex = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                revealedIndices.push(randomIndex);
                 
-                // Deduct score for using hint (optional, but makes it competitive)
-                if (score > 2) {
+                // Display it in slot
+                els.slots.children[randomIndex].textContent = answerCharacters[randomIndex].toUpperCase();
+                
+                // Score deduction for BotPlay
+                if (GameApp.gameMode === 'botplay' && score > 2) {
                     score -= 2;
                     updateScoreDisplay();
                 }
-                
-                revealedHints++;
-                
-                // Partially fill the input box to help
-                elements.input.value = answerChars.slice(0, revealedHints).join('').toUpperCase();
-                elements.input.focus();
             } else {
-                showFeedback("All hints used!", "text-yellow-500");
+                showFeedback("Sob hint deya hoyeche!", "text-yellow-500");
             }
-        }
+        };
+
+        // Skip Logic
+        document.getElementById('skip-btn').onclick = () => {
+            clearInterval(timerInterval);
+            if(score >= 5) score -= 5; // Penalty for skipping
+            updateScoreDisplay();
+            showModal('timeout', "Skip Kora Holo!", "Tumi eita skip korecho.");
+        };
 
         function handleTimeOut() {
-            showModal('timeout');
+            if(GameApp.gameMode === 'botplay') showModal('timeout', "Somoy Sesh!", "Somoyer moddhe paroni.");
+            else finishDuoGame('lost');
         }
 
         function showFeedback(msg, colorClass) {
-            elements.feedback.textContent = msg;
-            elements.feedback.className = `text-center text-sm mt-2 h-5 font-medium ${colorClass}`;
+            els.feedback.textContent = msg;
+            els.feedback.className = `text-center text-sm mt-2 h-5 font-medium ${colorClass}`;
         }
 
         function animateElement(element, animationClass) {
             element.classList.remove(animationClass);
-            void element.offsetWidth; // Trigger reflow
+            void element.offsetWidth; 
             element.classList.add(animationClass);
             setTimeout(() => element.classList.remove(animationClass), 400);
         }
 
-        function showModal(type) {
+        function showModal(type, titleText, msgText) {
             screens.modal.classList.remove('hidden');
-            
-            // Force reflow
             void screens.modal.offsetWidth;
-            
             screens.modal.classList.remove('opacity-0');
             screens.modal.classList.add('opacity-100');
             
@@ -493,84 +717,243 @@
             card.classList.remove('scale-90');
             card.classList.add('scale-100');
 
-            elements.modalScore.textContent = score;
-            elements.modalAnswer.textContent = currentRiddle.answer;
+            document.getElementById('modal-score').textContent = score;
+            document.getElementById('modal-answer').textContent = currentRiddle.answer;
+            
+            const nextBtn = document.getElementById('next-action-btn');
+            const homeBtn = document.getElementById('home-action-btn');
+
+            if (GameApp.gameMode === 'duo') {
+                document.getElementById('modal-score-box').classList.add('hidden');
+                document.getElementById('modal-divider').classList.add('hidden');
+                homeBtn.classList.remove('hidden');
+                homeBtn.onclick = () => { hideModal(); screens.game.classList.add('hidden'); screens.mode.classList.remove('hidden'); };
+                nextBtn.classList.add('hidden');
+            } else {
+                document.getElementById('modal-score-box').classList.remove('hidden');
+                document.getElementById('modal-divider').classList.remove('hidden');
+                homeBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                nextBtn.textContent = type === 'success' ? "Poroborti Level" : "Abar Chesta Korun";
+                nextBtn.onclick = type === 'success' ? () => { hideModal(); currentLevel++; loadLevel(); } : () => { hideModal(); loadLevel(); };
+            }
+
+            document.getElementById('result-title').textContent = titleText;
+            document.getElementById('result-msg').textContent = msgText;
+
+            const iconContainer = document.getElementById('result-icon-container');
+            const icon = document.getElementById('result-icon');
 
             if (type === 'success') {
-                elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-green-500';
-                elements.resultIcon.className = 'fa-solid fa-check text-4xl text-white';
-                elements.modalTitle.textContent = "Awesome!";
-                elements.modalTitle.className = "text-3xl font-bold mb-2 text-green-600";
-                elements.modalMsg.textContent = "You got the correct answer.";
-                buttons.next.textContent = "Next Level";
-                buttons.next.className = "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
-                buttons.next.onclick = nextLevel;
-            } else if (type === 'timeout') {
-                elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-red-500';
-                elements.resultIcon.className = 'fa-solid fa-clock text-4xl text-white';
-                elements.modalTitle.textContent = "Time's up!";
-                elements.modalTitle.className = "text-3xl font-bold mb-2 text-red-600";
-                elements.modalMsg.textContent = "You couldn't answer in time.";
-                buttons.next.textContent = "Try Again";
-                buttons.next.className = "w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
-                buttons.next.onclick = retryLevel;
+                iconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-green-500';
+                icon.className = 'fa-solid fa-check text-4xl text-white';
+                document.getElementById('result-title').className = "text-3xl font-bold mb-2 text-green-600";
+                if(GameApp.gameMode !== 'duo') nextBtn.className = "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
+            } else {
+                iconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-red-500';
+                icon.className = 'fa-solid fa-xmark text-4xl text-white';
+                document.getElementById('result-title').className = "text-3xl font-bold mb-2 text-red-600";
+                if(GameApp.gameMode !== 'duo') nextBtn.className = "w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
             }
         }
 
         function hideModal() {
             screens.modal.classList.remove('opacity-100');
             screens.modal.classList.add('opacity-0');
-            
-            const card = document.getElementById('result-card');
-            card.classList.remove('scale-100');
-            card.classList.add('scale-90');
-
-            setTimeout(() => {
-                screens.modal.classList.add('hidden');
-            }, 300);
+            document.getElementById('result-card').classList.remove('scale-100');
+            document.getElementById('result-card').classList.add('scale-90');
+            setTimeout(() => screens.modal.classList.add('hidden'), 300);
         }
 
-        function nextLevel() {
-            hideModal();
-            currentLevel++;
-            loadLevel();
-        }
 
-        function retryLevel() {
-            hideModal();
-            // Reset score slightly or keep it, let's just let them retry without penalty for a casual game
-            loadLevel();
-        }
+        // ----------------------------------------------------
+        // DUO MODE LOGIC (Firestore)
+        // ----------------------------------------------------
 
-        function showGameComplete() {
-            showModal('success'); // Reusing modal UI
-            elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-yellow-400';
-            elements.resultIcon.className = 'fa-solid fa-trophy text-4xl text-white';
-            elements.modalTitle.textContent = "Congratulations!";
-            elements.modalTitle.className = "text-3xl font-bold mb-2 text-yellow-500";
-            elements.modalMsg.textContent = "You have completed 100 levels!";
-            buttons.next.textContent = "Play Again";
-            buttons.next.className = "w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
-            buttons.next.onclick = () => {
-                hideModal();
-                initGame();
-            };
-        }
+        // Host creates room
+        document.getElementById('btn-submit-room').onclick = async () => {
+            const riddle = document.getElementById('duo-input-riddle').value.trim();
+            const answer = document.getElementById('duo-input-answer').value.trim().toLowerCase();
+            const time = parseInt(document.getElementById('duo-input-time').value);
+            const errEl = document.getElementById('create-error');
 
-        // Event Listeners
-        buttons.start.addEventListener('click', initGame);
-        buttons.submit.addEventListener('click', checkAnswer);
-        buttons.hint.addEventListener('click', useHint);
-        
-        // Enter key support for input
-        elements.input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkAnswer();
+            if(!riddle || !answer || !time || time < 10) {
+                errEl.textContent = "Sothik vabe sob kichu din (Time min 10s)";
+                errEl.classList.remove('hidden');
+                return;
             }
-        });
+            errEl.classList.add('hidden');
 
-        // Initialize display state
-        screens.game.classList.add('hidden');
+            const roomId = Math.floor(10000 + Math.random() * 90000).toString(); // 5 digit
+            GameApp.duoRoomId = roomId;
+
+            try {
+                // Rule 1: Strict Paths
+                const roomRef = doc(GameApp.db, 'artifacts', GameApp.appId, 'public', 'data', 'rooms', roomId);
+                await setDoc(roomRef, {
+                    riddle: riddle,
+                    answer: answer,
+                    timer: time,
+                    status: 'waiting',
+                    creatorId: GameApp.user.uid,
+                    timestamp: new Date().getTime()
+                });
+
+                document.getElementById('create-form').classList.add('hidden');
+                document.getElementById('room-waiting-view').classList.remove('hidden');
+                document.getElementById('display-room-code').textContent = roomId;
+                document.getElementById('display-room-code').classList.add('animate-pulse-pink');
+
+                // Generate QR
+                document.getElementById('qrcode-container').innerHTML = '';
+                new QRCode(document.getElementById("qrcode-container"), {
+                    text: roomId,
+                    width: 150,
+                    height: 150,
+                    colorDark : "#4f46e5",
+                    colorLight : "#ffffff"
+                });
+
+                // Listen for guest
+                GameApp.duoUnsubscribe = onSnapshot(roomRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.status === 'playing') {
+                            document.getElementById('room-waiting-view').innerHTML = `
+                                <div class="text-indigo-600 font-bold text-xl mt-6">
+                                    <i class="fa-solid fa-gamepad mb-2 text-4xl"></i><br>
+                                    Bondhu khelche...
+                                </div>`;
+                        } else if (data.status === 'finished') {
+                            document.getElementById('room-waiting-view').innerHTML = `
+                                <div class="${data.result === 'won' ? 'text-green-500' : 'text-red-500'} font-bold text-xl mt-6">
+                                    <i class="fa-solid ${data.result === 'won' ? 'fa-crown' : 'fa-skull-crossbones'} mb-2 text-4xl"></i><br>
+                                    Bondhu ${data.result === 'won' ? 'Jiteche!' : 'Hereche!'}
+                                </div>
+                                <button onclick="document.querySelector('.btn-back').click()" class="mt-4 bg-indigo-500 text-white px-4 py-2 rounded-lg">Fere Jan</button>
+                            `;
+                            if(GameApp.duoUnsubscribe) GameApp.duoUnsubscribe();
+                        }
+                    }
+                }, (error) => {
+                    console.error("Firestore Listen Error:", error);
+                });
+
+            } catch (e) {
+                errEl.textContent = "Error toiri korte: " + e.message;
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        // Guest joins via text code
+        document.getElementById('btn-join-submit').onclick = () => {
+            const code = document.getElementById('join-room-code').value.trim();
+            if(code.length === 5) joinGameSession(code);
+        };
+
+        // Guest joins via QR scanner
+        document.getElementById('btn-start-scanner').onclick = () => {
+            document.getElementById('join-input-section').classList.add('hidden');
+            document.getElementById('scanner-section').classList.remove('hidden');
+            
+            GameApp.html5QrcodeScanner = new Html5Qrcode("qr-reader");
+            GameApp.html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: {width: 250, height: 250} },
+                (decodedText) => {
+                    // Success
+                    GameApp.html5QrcodeScanner.stop();
+                    joinGameSession(decodedText.trim());
+                },
+                (errorMessage) => { /* ignore normal errors */ }
+            ).catch(err => {
+                document.getElementById('join-error').textContent = "Camera on kora jacche na.";
+                document.getElementById('join-error').classList.remove('hidden');
+            });
+        };
+
+        document.getElementById('btn-stop-scanner').onclick = () => {
+            if(GameApp.html5QrcodeScanner) GameApp.html5QrcodeScanner.stop();
+            document.getElementById('scanner-section').classList.add('hidden');
+            document.getElementById('join-input-section').classList.remove('hidden');
+        };
+
+        async function joinGameSession(roomId) {
+            const errEl = document.getElementById('join-error');
+            try {
+                const roomRef = doc(GameApp.db, 'artifacts', GameApp.appId, 'public', 'data', 'rooms', roomId);
+                const docSnap = await getDoc(roomRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.status !== 'waiting') {
+                        errEl.textContent = "Room e already khela hocche ba sesh!";
+                        errEl.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    // Update to playing
+                    await updateDoc(roomRef, {
+                        status: 'playing',
+                        guestId: GameApp.user.uid
+                    });
+
+                    GameApp.duoRoomId = roomId;
+                    GameApp.gameMode = 'duo';
+                    startDuoGameUI(data);
+
+                } else {
+                    errEl.textContent = "Sothik code noy!";
+                    errEl.classList.remove('hidden');
+                }
+            } catch(e) {
+                errEl.textContent = "Join error: " + e.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function startDuoGameUI(data) {
+            // Hide Scanner if active
+            if(GameApp.html5QrcodeScanner) {
+                try { GameApp.html5QrcodeScanner.stop(); } catch(e){}
+            }
+            
+            screens.duoJoin.classList.add('hidden');
+            screens.game.classList.remove('hidden');
+            
+            // UI Tweaks for Duo Mode
+            document.getElementById('game-header').className = "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 flex justify-between items-center rounded-b-2xl shadow-md z-10";
+            document.getElementById('riddle-icon-bg').className = "absolute -top-5 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg";
+            document.getElementById('submit-btn').className = "w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2";
+            
+            document.getElementById('skip-btn').classList.add('hidden'); // No skip in duo
+            document.getElementById('btn-quit-game').classList.remove('hidden');
+            els.level.parentElement.classList.add('hidden'); // No level display
+            document.getElementById('score-container').classList.add('hidden'); // No score display
+
+            currentRiddle = { question: data.riddle, answer: data.answer };
+            maxTime = data.timer;
+            
+            setupGameBoard();
+            startTimer();
+        }
+
+        async function finishDuoGame(resultStr) {
+            clearInterval(timerInterval);
+            if(resultStr === 'won') {
+                showModal('success', "Darun Khelecho!", "Tumi uttor ti dhorte perecho.");
+            } else {
+                showModal('timeout', "Ops!", "Tumi uttor dite paroni.");
+            }
+
+            try {
+                const roomRef = doc(GameApp.db, 'artifacts', GameApp.appId, 'public', 'data', 'rooms', GameApp.duoRoomId);
+                await updateDoc(roomRef, {
+                    status: 'finished',
+                    result: resultStr
+                });
+            } catch(e) { console.error("Update fail:", e); }
+        }
 
     </script>
 </body>
