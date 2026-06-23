@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WordHunt - বাংলা ধাঁধার খেলা</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pink: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f9a8d4',
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                            800: '#9d174d',
+                            900: '#831843',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Hind Siliguri"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #fdf2f8; /* pink-50 */
+            touch-action: manipulation;
+            overflow: hidden; /* Prevent scrolling on mobile */
+        }
+
+        /* Custom Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        @keyframes pulse-pink {
+            0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Styling the timer progress bar */
+        .timer-bar-container {
+            width: 100%;
+            background-color: #fce7f3; /* pink-100 */
+            border-radius: 9999px;
+            overflow: hidden;
+            height: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f472b6, #ec4899);
+            width: 100%;
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+
+        .timer-warning {
+            background: linear-gradient(90deg, #f87171, #ef4444);
+        }
+
+        /* Glassmorphism effects for cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.1);
+        }
+
+        /* Beautiful Input Field */
+        .bengali-input {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            border: 2px solid #fbcfe8;
+            transition: all 0.3s ease;
+        }
+        
+        .bengali-input:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+        }
+
+        /* Button click effect */
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
+        /* Character slots for visual hint */
+        .char-slot {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 45px;
+            margin: 0 4px;
+            border-bottom: 3px solid #db2777;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #db2777;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative">
+
+    <!-- Main Game Container -->
+    <div id="game-screen" class="w-full max-w-md h-full sm:h-auto sm:min-h-[600px] flex flex-col bg-white sm:rounded-3xl shadow-2xl relative overflow-hidden hidden">
+        
+        <!-- Header Strip -->
+        <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 flex justify-between items-center rounded-b-2xl shadow-md z-10">
+            <div class="flex items-center gap-2">
+                <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+                    <i class="fa-solid fa-star text-yellow-300"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-pink-100 font-medium">স্কোর</p>
+                    <p id="score-display" class="font-bold text-xl leading-none">০</p>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold tracking-wider">WordHunt</h1>
+            <div class="flex items-center gap-2 text-right">
+                <div>
+                    <p class="text-xs text-pink-100 font-medium">লেভেল</p>
+                    <p id="level-display" class="font-bold text-xl leading-none">১<span class="text-sm font-normal text-pink-200">/১০০</span></p>
+                </div>
+                <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+                    <i class="fa-solid fa-layer-group text-white"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="flex-1 p-6 flex flex-col relative z-0">
+            
+            <!-- Timer Section -->
+            <div class="mb-6">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-gray-500 text-sm font-medium"><i class="fa-regular fa-clock mr-1"></i> সময় বাকি</span>
+                    <span id="timer-text" class="text-pink-600 font-bold text-xl">৩০ সেঃ</span>
+                </div>
+                <div class="timer-bar-container">
+                    <div id="timer-bar" class="timer-bar"></div>
+                </div>
+            </div>
+
+            <!-- Riddle Card -->
+            <div class="glass-card rounded-2xl p-6 mb-8 text-center flex-1 flex flex-col justify-center relative">
+                <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-pink-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-question text-xl"></i>
+                </div>
+                <p id="riddle-text" class="text-xl md:text-2xl text-gray-800 font-semibold leading-relaxed mt-4">
+                    <!-- Riddle goes here -->
+                </p>
+            </div>
+
+            <!-- Input Area -->
+            <div class="w-full mb-4">
+                <div id="word-slots" class="flex justify-center mb-4 flex-wrap">
+                    <!-- Slots will be generated here -->
+                </div>
+                <div class="relative">
+                    <input type="text" id="answer-input" 
+                        class="bengali-input w-full bg-white text-gray-800 rounded-xl py-4 px-4 shadow-sm" 
+                        placeholder="এখানে উত্তর লিখুন..." 
+                        autocomplete="off" spellcheck="false">
+                    
+                    <button id="hint-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors btn-press" title="হিন্ট নিন">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </button>
+                </div>
+                <p id="feedback-msg" class="text-center text-sm mt-2 h-5 font-medium"></p>
+            </div>
+
+            <!-- Submit Button -->
+            <button id="submit-btn" class="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-lg flex justify-center items-center gap-2">
+                <span>উত্তর দিন</span>
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-pink-400 to-pink-600 p-6 absolute inset-0 z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-pop">
+            <div class="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i class="fa-solid fa-magnifying-glass text-5xl text-pink-500"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">WordHunt</h1>
+            <p class="text-gray-500 mb-8 font-medium">বাংলা ধাঁধার মজার খেলা</p>
+            
+            <div class="bg-pink-50 rounded-xl p-4 mb-8 text-left text-sm text-gray-700 border border-pink-100">
+                <ul class="space-y-2">
+                    <li><i class="fa-solid fa-check text-pink-500 mr-2"></i> ধাঁধা পড়ে সঠিক শব্দ খুঁজুন।</li>
+                    <li><i class="fa-solid fa-clock text-pink-500 mr-2"></i> সময় মাত্র ৩০ সেকেন্ড।</li>
+                    <li><i class="fa-solid fa-lightbulb text-pink-500 mr-2"></i> আটকে গেলে হিন্ট ব্যবহার করুন।</li>
+                </ul>
+            </div>
+
+            <button id="start-game-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all btn-press text-xl">
+                খেলা শুরু করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- Level Complete / Game Over Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div id="result-card" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl mx-4 transform scale-90 transition-transform duration-300">
+            
+            <!-- Result Icon -->
+            <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg">
+                <i id="result-icon" class="fa-solid text-3xl text-white"></i>
+            </div>
+
+            <h2 id="result-title" class="text-3xl font-bold mb-2"></h2>
+            <p id="result-msg" class="text-gray-600 mb-6"></p>
+
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 flex justify-around">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">আপনার স্কোর</p>
+                    <p id="modal-score" class="text-2xl font-bold text-pink-600">০</p>
+                </div>
+                <div class="w-px bg-gray-200"></div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">সঠিক উত্তর</p>
+                    <p id="modal-answer" class="text-lg font-bold text-gray-800 mt-1">-</p>
+                </div>
+            </div>
+
+            <button id="next-action-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press">
+                পরের লেভেল
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Number Converter (Eng to Bn)
+        const engToBnNumbers = {
+            '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+            '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+        };
+        const toBnNum = (num) => String(num).split('').map(c => engToBnNumbers[c] || c).join('');
+
+        // Game Data (Riddles)
+        const riddlesDatabase = [
+            { question: "আকাশেতে ওঠে সে, আলো দেয় রাতে।", answer: "চাঁদ" },
+            { question: "চার পায়ে হাঁটে, কিন্তু এক পাও যেতে পারে না।", answer: "টেবিল" },
+            { question: "কাঁচা থাকতে সবুজ, পাকলে হয় হলুদ।", answer: "কলা" },
+            { question: "জল খায় না, তবু নদী পার হয়।", answer: "নৌকা" },
+            { question: "চোখ নেই তবু কাঁদে, ডানা নেই তবু ওড়ে।", answer: "মেঘ" },
+            { question: "যত মুছবে, তত কালো হবে।", answer: "ব্ল্যাকবোর্ড" },
+            { question: "এক ঘরেতে বত্রিশ ভাই, মারামারি নেইকো ছাই।", answer: "দাঁত" },
+            { question: "কোন জিনিস কাটলে বড় হয়?", answer: "পুকুর" },
+            { question: "লাল গাভীটি ঘাস খায়, জল খেলে মরে যায়।", answer: "আগুন" },
+            { question: "তিন অক্ষরে নাম তার, জলে বাস করে। মাঝের অক্ষর কেটে দিলে, আকাশেতে ওড়ে।", answer: "বক" }, // Simplified version
+            { question: "মাথা আছে কিন্তু চুল নেই, পেট আছে কিন্তু নাড়িভুঁড়ি নেই।", answer: "কলসি" },
+            { question: "সকালে চার পায়ে, দুপুরে দুই পায়ে, আর সন্ধ্যায় তিন পায়ে হাঁটে কে?", answer: "মানুষ" },
+            { question: "গলা আছে, মাথা নেই। হাত আছে, আঙুল নেই।", answer: "শার্ট" },
+            { question: "কোন ফলের বীজ ফলের বাইরে থাকে?", answer: "কাজুবাদাম" },
+            { question: "এক বুড়ির বারোটা ছেলে, এক একটা ছেলের ত্রিশটা নাতি।", answer: "বছর" }, // Year, Months, Days
+            { question: "ছোট্ট একটা ঘরে, হাজার মানুষ বাস করে।", answer: "মৌচাক" },
+            { question: "যেতে বলি তবু যায় না, ধরতে গেলে ধরা দেয় না।", answer: "ছায়া" },
+            { question: "কোন প্রশ্নের উত্তর কখনও 'হ্যাঁ' দেওয়া যায় না?", answer: "ঘুমিয়েছ" },
+            { question: "আসে কিন্তু কখনো পৌঁছায় না।", answer: "আগামীকাল" },
+            { question: "যত টানো, তত ছোট হয়।", answer: "সিগারেট" }
+        ];
+
+        // Ensure we have up to 100 levels by repeating/shuffling if needed, 
+        // but for this build we'll loop through the database to represent 100 levels.
+        let allLevels = [];
+        for (let i = 0; i < 100; i++) {
+            allLevels.push(riddlesDatabase[i % riddlesDatabase.length]);
+        }
+
+        // Game State Variables
+        let currentLevel = 1;
+        const totalLevels = 100;
+        let score = 0;
+        let timeLeft = 30;
+        let timerInterval;
+        let currentRiddle = null;
+        let revealedHints = 0;
+
+        // DOM Elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            modal: document.getElementById('result-modal')
+        };
+        const elements = {
+            level: document.getElementById('level-display'),
+            score: document.getElementById('score-display'),
+            timerText: document.getElementById('timer-text'),
+            timerBar: document.getElementById('timer-bar'),
+            riddle: document.getElementById('riddle-text'),
+            input: document.getElementById('answer-input'),
+            slots: document.getElementById('word-slots'),
+            feedback: document.getElementById('feedback-msg'),
+            modalTitle: document.getElementById('result-title'),
+            modalMsg: document.getElementById('result-msg'),
+            modalScore: document.getElementById('modal-score'),
+            modalAnswer: document.getElementById('modal-answer'),
+            resultIconContainer: document.getElementById('result-icon-container'),
+            resultIcon: document.getElementById('result-icon')
+        };
+        const buttons = {
+            start: document.getElementById('start-game-btn'),
+            submit: document.getElementById('submit-btn'),
+            hint: document.getElementById('hint-btn'),
+            next: document.getElementById('next-action-btn')
+        };
+
+        function initGame() {
+            currentLevel = 1;
+            score = 0;
+            updateScoreDisplay();
+            screens.start.style.display = 'none';
+            screens.game.classList.remove('hidden');
+            loadLevel();
+        }
+
+        function loadLevel() {
+            if (currentLevel > totalLevels) {
+                showGameComplete();
+                return;
+            }
+
+            currentRiddle = allLevels[currentLevel - 1];
+            revealedHints = 0;
+            elements.input.value = '';
+            elements.input.focus();
+            elements.feedback.textContent = '';
+            elements.feedback.className = 'text-center text-sm mt-2 h-5 font-medium';
+            
+            elements.level.innerHTML = `${toBnNum(currentLevel)}<span class="text-sm font-normal text-pink-200">/${toBnNum(totalLevels)}</span>`;
+            elements.riddle.textContent = currentRiddle.question;
+            
+            createWordSlots(currentRiddle.answer);
+            
+            startTimer();
+        }
+
+        function createWordSlots(word) {
+            elements.slots.innerHTML = '';
+            // For Bengali, simple length based on characters. 
+            // Note: complex conjuncts might be treated as multiple chars in JS, 
+            // but for simple game visuals, we just use string length.
+            const len = Array.from(word).length; 
+            for (let i = 0; i < len; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'char-slot';
+                elements.slots.appendChild(slot);
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            updateTimerDisplay();
+            elements.timerBar.style.width = '100%';
+            elements.timerBar.classList.remove('timer-warning');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                const percentage = (timeLeft / 30) * 100;
+                elements.timerBar.style.width = `${percentage}%`;
+
+                if (timeLeft <= 10) {
+                    elements.timerBar.classList.add('timer-warning');
+                    elements.timerText.classList.replace('text-pink-600', 'text-red-500');
+                } else {
+                    elements.timerText.classList.replace('text-red-500', 'text-pink-600');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            elements.timerText.textContent = `${toBnNum(timeLeft)} সেঃ`;
+        }
+
+        function updateScoreDisplay() {
+            elements.score.textContent = toBnNum(score);
+        }
+
+        function checkAnswer() {
+            if (timeLeft <= 0) return; // Prevent submission if time is up
+            
+            const userAnswer = elements.input.value.trim();
+            if (!userAnswer) {
+                showFeedback("দয়া করে উত্তর লিখুন!", "text-yellow-500");
+                animateElement(elements.input, 'animate-shake');
+                return;
+            }
+
+            clearInterval(timerInterval);
+
+            if (userAnswer === currentRiddle.answer) {
+                // Correct
+                const pointsEarned = 10 + timeLeft; // Base 10 + bonus for time
+                score += pointsEarned;
+                updateScoreDisplay();
+                showModal('success');
+            } else {
+                // Incorrect
+                showFeedback("ভুল উত্তর! আবার চেষ্টা করুন।", "text-red-500");
+                animateElement(elements.input, 'animate-shake');
+                startTimer(); // Resume timer
+            }
+        }
+
+        function useHint() {
+            if (timeLeft <= 0) return;
+            
+            const answerChars = Array.from(currentRiddle.answer);
+            if (revealedHints < answerChars.length) {
+                const slots = elements.slots.children;
+                slots[revealedHints].textContent = answerChars[revealedHints];
+                
+                // Deduct score for using hint (optional, but makes it competitive)
+                if (score > 2) {
+                    score -= 2;
+                    updateScoreDisplay();
+                }
+                
+                revealedHints++;
+                
+                // Partially fill the input box to help
+                elements.input.value = answerChars.slice(0, revealedHints).join('');
+                elements.input.focus();
+            } else {
+                showFeedback("সব হিন্ট ব্যবহার করা হয়েছে!", "text-yellow-500");
+            }
+        }
+
+        function handleTimeOut() {
+            showModal('timeout');
+        }
+
+        function showFeedback(msg, colorClass) {
+            elements.feedback.textContent = msg;
+            elements.feedback.className = `text-center text-sm mt-2 h-5 font-medium ${colorClass}`;
+        }
+
+        function animateElement(element, animationClass) {
+            element.classList.remove(animationClass);
+            void element.offsetWidth; // Trigger reflow
+            element.classList.add(animationClass);
+            setTimeout(() => element.classList.remove(animationClass), 400);
+        }
+
+        function showModal(type) {
+            screens.modal.classList.remove('hidden');
+            
+            // Force reflow
+            void screens.modal.offsetWidth;
+            
+            screens.modal.classList.remove('opacity-0');
+            screens.modal.classList.add('opacity-100');
+            
+            const card = document.getElementById('result-card');
+            card.classList.remove('scale-90');
+            card.classList.add('scale-100');
+
+            elements.modalScore.textContent = toBnNum(score);
+            elements.modalAnswer.textContent = currentRiddle.answer;
+
+            if (type === 'success') {
+                elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-green-500';
+                elements.resultIcon.className = 'fa-solid fa-check text-4xl text-white';
+                elements.modalTitle.textContent = "দারুণ!";
+                elements.modalTitle.className = "text-3xl font-bold mb-2 text-green-600";
+                elements.modalMsg.textContent = "সঠিক উত্তর দিয়েছেন।";
+                buttons.next.textContent = "পরের লেভেল";
+                buttons.next.className = "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
+                buttons.next.onclick = nextLevel;
+            } else if (type === 'timeout') {
+                elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-red-500';
+                elements.resultIcon.className = 'fa-solid fa-clock text-4xl text-white';
+                elements.modalTitle.textContent = "সময় শেষ!";
+                elements.modalTitle.className = "text-3xl font-bold mb-2 text-red-600";
+                elements.modalMsg.textContent = "আপনি সঠিক উত্তর দিতে পারেননি।";
+                buttons.next.textContent = "আবার চেষ্টা করুন";
+                buttons.next.className = "w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
+                buttons.next.onclick = retryLevel;
+            }
+        }
+
+        function hideModal() {
+            screens.modal.classList.remove('opacity-100');
+            screens.modal.classList.add('opacity-0');
+            
+            const card = document.getElementById('result-card');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-90');
+
+            setTimeout(() => {
+                screens.modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function nextLevel() {
+            hideModal();
+            currentLevel++;
+            loadLevel();
+        }
+
+        function retryLevel() {
+            hideModal();
+            // Reset score slightly or keep it, let's just let them retry without penalty for a casual game
+            loadLevel();
+        }
+
+        function showGameComplete() {
+            showModal('success'); // Reusing modal UI
+            elements.resultIconContainer.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 -mt-16 border-4 border-white shadow-lg bg-yellow-400';
+            elements.resultIcon.className = 'fa-solid fa-trophy text-4xl text-white';
+            elements.modalTitle.textContent = "অভিনন্দন!";
+            elements.modalTitle.className = "text-3xl font-bold mb-2 text-yellow-500";
+            elements.modalMsg.textContent = "আপনি ১০০ টি লেভেল সম্পূর্ণ করেছেন!";
+            buttons.next.textContent = "আবার খেলুন";
+            buttons.next.className = "w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md transition-all btn-press";
+            buttons.next.onclick = () => {
+                hideModal();
+                initGame();
+            };
+        }
+
+        // Event Listeners
+        buttons.start.addEventListener('click', initGame);
+        buttons.submit.addEventListener('click', checkAnswer);
+        buttons.hint.addEventListener('click', useHint);
+        
+        // Enter key support for input
+        elements.input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Initialize display state
+        screens.game.classList.add('hidden');
+
+    </script>
+</body>
+</html>
