@@ -790,21 +790,26 @@
                     document.getElementById('p2p-status').innerHTML = `
                         <div class="text-indigo-600 font-bold text-xl mt-2">
                             <i class="fa-solid fa-gamepad mb-2 text-4xl"></i><br>
-                            Bondhu Khelche...
+                            Bondhu connect korche...
                         </div>`;
-
-                    // Send game data directly to guest
-                    conn.send({
-                        type: 'start_game',
-                        riddle: riddle,
-                        answer: answer,
-                        timer: time
-                    });
                 });
 
-                // Listen for guest's result
+                // Listen for guest's result and signals
                 conn.on('data', (data) => {
-                    if (data.type === 'game_result') {
+                    if (data.type === 'guest_ready') {
+                        document.getElementById('p2p-status').innerHTML = `
+                            <div class="text-indigo-600 font-bold text-xl mt-2">
+                                <i class="fa-solid fa-gamepad mb-2 text-4xl"></i><br>
+                                Bondhu Khelche...
+                            </div>`;
+                        // Send game data directly to guest ONLY when they are ready
+                        conn.send({
+                            type: 'start_game',
+                            riddle: riddle,
+                            answer: answer,
+                            timer: time
+                        });
+                    } else if (data.type === 'game_result') {
                         document.getElementById('p2p-status').innerHTML = `
                             <div class="${data.result === 'won' ? 'text-green-500' : 'text-red-500'} font-bold text-xl mt-2">
                                 <i class="fa-solid ${data.result === 'won' ? 'fa-crown' : 'fa-skull-crossbones'} mb-2 text-4xl"></i><br>
@@ -870,10 +875,13 @@
             const hostPeerId = 'whgame-p2p-' + roomId;
 
             GameApp.peer.on('open', () => {
-                // Connect to host
-                GameApp.conn = GameApp.peer.connect(hostPeerId);
+                // Connect to host with reliable connection
+                GameApp.conn = GameApp.peer.connect(hostPeerId, { reliable: true });
 
                 GameApp.conn.on('open', () => {
+                    // Tell Host that Guest listener is ready
+                    GameApp.conn.send({ type: 'guest_ready' });
+
                     // Connected! Wait for host to send 'start_game' event
                     GameApp.conn.on('data', (data) => {
                         if (data.type === 'start_game') {
@@ -899,7 +907,7 @@
                 cleanupP2P();
             });
             
-            // Timeout safety
+            // Timeout safety (increased to 15 seconds)
             setTimeout(() => {
                 if(!GameApp.conn || !GameApp.conn.open) {
                     screens.loading.classList.add('hidden');
@@ -907,7 +915,7 @@
                     errEl.classList.remove('hidden');
                     cleanupP2P();
                 }
-            }, 10000);
+            }, 15000);
         }
 
         function startDuoGameUI(data) {
